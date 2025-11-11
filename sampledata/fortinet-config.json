@@ -1,0 +1,523 @@
+{
+  "organization": "GlobalTech Europe AG",
+  "configuration_version": "7.6.3 Enterprise",
+  "last_updated": "2025-11-03",
+  "configuration_owner": "Network Security Team",
+  "classification": "INTERNAL - CONFIDENTIAL",
+  "system_configuration": {
+    "global_settings": {
+      "hostname": "FGT-FRANKFURT-01",
+      "alias": "GlobalTech-Primary-Firewall",
+      "timezone": "Europe/Berlin",
+      "admin_server_cert": "Fortinet_Factory",
+      "admin_timeout": 30,
+      "admin_lockout_threshold": 5,
+      "admin_lockout_duration": 600,
+      "revision_backup_on_logout": true,
+      "revision_image_auto_backup": true,
+      "tcp_halfopen_timer": 10,
+      "tcp_halfclose_timer": 120,
+      "tcp_timewait_timer": 1,
+      "admin_https_redirect": true,
+      "admin_ssh_password": true,
+      "admin_ssh_port": 22,
+      "admin_ssh_v1": false,
+      "admin_https_ssl_versions": [
+        "tlsv1-2",
+        "tlsv1-3"
+      ],
+      "strong_crypto": true
+    },
+    "operation_mode": "nat",
+    "ngfw_mode": "profile-based",
+    "ssl_static_key_log": false,
+    "dns_primary": "1.1.1.1",
+    "dns_secondary": "8.8.8.8",
+    "dns_cache_limit": 50000,
+    "dns_cache_ttl": 1800,
+    "ntp_sync": true,
+    "ntp_type": "fortiguard",
+    "ntp_interface": "port1"
+  },
+  "network_interfaces": {
+    "physical_interfaces": [
+      {
+        "name": "port1",
+        "alias": "WAN-PRIMARY",
+        "mode": "static",
+        "ip": "203.0.113.10",
+        "netmask": "255.255.255.248",
+        "allowaccess": [
+          "ping",
+          "https",
+          "ssh"
+        ],
+        "type": "physical",
+        "role": "wan",
+        "snmp_index": 1
+      },
+      {
+        "name": "port2",
+        "alias": "WAN-SECONDARY",
+        "mode": "static",
+        "ip": "198.51.100.10",
+        "netmask": "255.255.255.248",
+        "allowaccess": [
+          "ping"
+        ],
+        "type": "physical",
+        "role": "wan",
+        "snmp_index": 2
+      },
+      {
+        "name": "port3",
+        "alias": "INTERNAL-TRUNK",
+        "mode": "static",
+        "ip": "10.10.1.1",
+        "netmask": "255.255.255.0",
+        "allowaccess": [
+          "ping",
+          "https",
+          "ssh"
+        ],
+        "type": "physical",
+        "role": "lan",
+        "snmp_index": 3
+      },
+      {
+        "name": "port4",
+        "alias": "DMZ-NETWORK",
+        "mode": "static",
+        "ip": "10.20.1.1",
+        "netmask": "255.255.255.0",
+        "allowaccess": [
+          "ping"
+        ],
+        "type": "physical",
+        "role": "dmz",
+        "snmp_index": 4
+      },
+      {
+        "name": "port5",
+        "alias": "OT-MANUFACTURING",
+        "mode": "static",
+        "ip": "10.50.1.1",
+        "netmask": "255.255.255.0",
+        "allowaccess": [
+          "ping"
+        ],
+        "type": "physical",
+        "role": "lan",
+        "snmp_index": 5
+      }
+    ],
+    "vlan_interfaces": [
+      {
+        "name": "VLAN-10-EXECUTIVE",
+        "vlanid": 10,
+        "ip": "10.10.10.1",
+        "netmask": "255.255.255.0",
+        "interface": "port3",
+        "description": "C-Level and Senior Management",
+        "role": "lan"
+      },
+      {
+        "name": "VLAN-20-IT-SECURITY",
+        "vlanid": 20,
+        "ip": "10.10.20.1",
+        "netmask": "255.255.255.0",
+        "interface": "port3",
+        "description": "IT Security Team",
+        "role": "lan"
+      },
+      {
+        "name": "VLAN-30-FINANCE",
+        "vlanid": 30,
+        "ip": "10.10.30.1",
+        "netmask": "255.255.254.0",
+        "interface": "port3",
+        "description": "Finance and Accounting",
+        "role": "lan"
+      },
+      {
+        "name": "VLAN-50-OPERATIONS",
+        "vlanid": 50,
+        "ip": "10.10.50.1",
+        "netmask": "255.255.248.0",
+        "interface": "port3",
+        "description": "EMEA Operations Team",
+        "role": "lan"
+      },
+      {
+        "name": "VLAN-60-SALES",
+        "vlanid": 60,
+        "ip": "10.10.64.1",
+        "netmask": "255.255.248.0",
+        "interface": "port3",
+        "description": "Sales EMEA Team",
+        "role": "lan"
+      },
+      {
+        "name": "VLAN-99-GUEST",
+        "vlanid": 99,
+        "ip": "10.10.199.1",
+        "netmask": "255.255.255.0",
+        "interface": "port3",
+        "description": "Guest WiFi Network",
+        "role": "lan"
+      }
+    ]
+  },
+  "user_groups": [
+    {
+      "name": "C-Level-Executives",
+      "member": "AzureAD-LDAP",
+      "azure_ad_group": "SEC-ZS-C-Level-Executives",
+      "member_count": 12
+    },
+    {
+      "name": "IT-Security-Team",
+      "member": "AzureAD-LDAP",
+      "azure_ad_group": "SEC-ZS-IT-Security-Team",
+      "member_count": 45
+    },
+    {
+      "name": "Finance-Controllers",
+      "member": "AzureAD-LDAP",
+      "azure_ad_group": "SEC-ZS-Finance-Controllers",
+      "member_count": 180
+    },
+    {
+      "name": "Sales-EMEA",
+      "member": "AzureAD-LDAP",
+      "azure_ad_group": "SEC-ZS-Sales-EMEA",
+      "member_count": 1400
+    },
+    {
+      "name": "External-Contractors",
+      "member": "AzureAD-LDAP",
+      "azure_ad_group": "SEC-ZS-External-Contractors",
+      "member_count": 450
+    }
+  ],
+  "authentication": {
+    "ldap_server": {
+      "name": "AzureAD-LDAP",
+      "server": "ldap.globaltecheurope.com",
+      "cnid": "sAMAccountName",
+      "dn": "DC=globaltecheurope,DC=com",
+      "type": "regular",
+      "username": "CN=LDAP-Service,OU=ServiceAccounts,DC=globaltecheurope,DC=com",
+      "secure": "ldaps",
+      "port": 636,
+      "group_member_check": "group-object"
+    },
+    "radius_server": {
+      "name": "Azure-MFA-RADIUS",
+      "server": "nps01.globaltecheurope.com",
+      "timeout": 10,
+      "all_usergroup": true
+    }
+  },
+  "address_objects": [
+    {
+      "name": "NET-VLAN-10-EXECUTIVE",
+      "subnet": "10.10.10.0/24",
+      "comment": "C-Level and Senior Management"
+    },
+    {
+      "name": "NET-VLAN-20-IT-SECURITY",
+      "subnet": "10.10.20.0/24",
+      "comment": "IT Security Team"
+    },
+    {
+      "name": "NET-VLAN-30-FINANCE",
+      "subnet": "10.10.30.0/23",
+      "comment": "Finance and Accounting"
+    },
+    {
+      "name": "SRV-WEB-01",
+      "subnet": "10.20.1.10/32",
+      "comment": "Web Server Primary"
+    },
+    {
+      "name": "SRV-SAP-PROD",
+      "subnet": "10.10.1.100/32",
+      "comment": "SAP Production Server"
+    },
+    {
+      "name": "GEO-BLOCKED-COUNTRIES",
+      "type": "geography",
+      "countries": [
+        "CN",
+        "RU",
+        "KP",
+        "IR",
+        "SY"
+      ],
+      "comment": "NIS2 Compliance - High Risk Countries"
+    }
+  ],
+  "address_groups": [
+    {
+      "name": "GRP-INTERNAL-NETWORKS",
+      "members": [
+        "NET-VLAN-10-EXECUTIVE",
+        "NET-VLAN-20-IT-SECURITY",
+        "NET-VLAN-30-FINANCE"
+      ],
+      "comment": "All Internal User VLANs"
+    },
+    {
+      "name": "GRP-CRITICAL-SERVERS",
+      "members": [
+        "SRV-DC-01",
+        "SRV-SQL-01",
+        "SRV-SAP-PROD"
+      ],
+      "comment": "Critical Infrastructure Servers"
+    }
+  ],
+  "service_objects": [
+    {
+      "name": "SVC-SAP",
+      "tcp_ports": [
+        "3200-3299",
+        "8000",
+        "8443"
+      ],
+      "comment": "SAP Application Ports"
+    },
+    {
+      "name": "SVC-RDP",
+      "tcp_ports": [
+        "3389"
+      ],
+      "comment": "Remote Desktop Protocol"
+    },
+    {
+      "name": "SVC-SSH",
+      "tcp_ports": [
+        "22"
+      ],
+      "comment": "Secure Shell"
+    },
+    {
+      "name": "SVC-SQL-SERVER",
+      "tcp_ports": [
+        "1433"
+      ],
+      "comment": "Microsoft SQL Server"
+    }
+  ],
+  "policies": [
+    {
+      "policy_id": 1,
+      "name": "POL-001-BLOCK-GEO-RESTRICTED",
+      "srcintf": [
+        "port1",
+        "port2"
+      ],
+      "dstintf": "any",
+      "action": "deny",
+      "srcaddr": "GEO-BLOCKED-COUNTRIES",
+      "dstaddr": "all",
+      "schedule": "always",
+      "service": "ALL",
+      "logtraffic": "all",
+      "comments": "NIS2 Compliance: Block High-Risk Countries",
+      "priority": "highest"
+    },
+    {
+      "policy_id": 10,
+      "name": "POL-010-EXECUTIVE-INTERNET",
+      "srcintf": "VLAN-10-EXECUTIVE",
+      "dstintf": "port1",
+      "action": "accept",
+      "srcaddr": "NET-VLAN-10-EXECUTIVE",
+      "dstaddr": "all",
+      "schedule": "always",
+      "service": [
+        "HTTP",
+        "HTTPS",
+        "DNS"
+      ],
+      "utm_status": true,
+      "av_profile": "av-profile-strict",
+      "webfilter_profile": "webfilter-executive",
+      "ips_sensor": "ips-strict",
+      "application_list": "app-control-standard",
+      "ssl_ssh_profile": "deep-inspection",
+      "nat": true,
+      "logtraffic": "all",
+      "groups": [
+        "C-Level-Executives",
+        "Senior-Management"
+      ],
+      "comments": "Executive Internet with Full Security"
+    },
+    {
+      "policy_id": 20,
+      "name": "POL-020-IT-SECURITY-INTERNET",
+      "srcintf": "VLAN-20-IT-SECURITY",
+      "dstintf": "port1",
+      "action": "accept",
+      "srcaddr": "NET-VLAN-20-IT-SECURITY",
+      "dstaddr": "all",
+      "schedule": "always",
+      "service": "ALL",
+      "utm_status": true,
+      "av_profile": "av-profile-monitor",
+      "webfilter_profile": "webfilter-it-security",
+      "ips_sensor": "ips-monitor",
+      "nat": true,
+      "logtraffic": "all",
+      "groups": [
+        "IT-Security-Team"
+      ],
+      "comments": "IT Security Team - Monitor Mode"
+    },
+    {
+      "policy_id": 99,
+      "name": "POL-099-GUEST-INTERNET-ONLY",
+      "srcintf": "VLAN-99-GUEST",
+      "dstintf": "port1",
+      "action": "accept",
+      "srcaddr": "NET-VLAN-99-GUEST",
+      "dstaddr": "all",
+      "schedule": "always",
+      "service": [
+        "HTTP",
+        "HTTPS",
+        "DNS"
+      ],
+      "utm_status": true,
+      "av_profile": "av-profile-standard",
+      "webfilter_profile": "webfilter-guest",
+      "nat": true,
+      "logtraffic": "all",
+      "comments": "Guest WiFi - Internet Only, No Internal Access"
+    },
+    {
+      "policy_id": 1000,
+      "name": "POL-1000-DEFAULT-DENY-ALL",
+      "srcintf": "any",
+      "dstintf": "any",
+      "action": "deny",
+      "srcaddr": "all",
+      "dstaddr": "all",
+      "schedule": "always",
+      "service": "ALL",
+      "logtraffic": "all",
+      "comments": "Default Deny - Log All Blocked Traffic",
+      "priority": "lowest"
+    }
+  ],
+  "vpn_configuration": {
+    "ssl_vpn": {
+      "status": "enabled",
+      "port": 10443,
+      "source_interface": "port1",
+      "tunnel_ip_pool": "10.200.0.1-10.200.0.254",
+      "authentication_rules": [
+        {
+          "groups": [
+            "C-Level-Executives",
+            "Senior-Management"
+          ],
+          "portal": "full-access"
+        },
+        {
+          "groups": [
+            "Sales-EMEA",
+            "Operations-EMEA"
+          ],
+          "portal": "tunnel-access"
+        }
+      ]
+    },
+    "ipsec_vpn": [
+      {
+        "name": "AZURE-WESTEUROPE-VPN",
+        "interface": "port1",
+        "ike_version": 2,
+        "remote_gateway": "51.144.10.20",
+        "local_subnet": "10.10.0.0/16",
+        "remote_subnet": "10.100.0.0/16",
+        "phase1_proposal": [
+          "aes256-sha256",
+          "aes256-sha512"
+        ],
+        "phase2_proposal": [
+          "aes256-sha256",
+          "aes256-sha512"
+        ]
+      },
+      {
+        "name": "AWS-EU-WEST-1-VPN",
+        "interface": "port1",
+        "ike_version": 2,
+        "remote_gateway": "54.72.10.30",
+        "local_subnet": "10.10.0.0/16",
+        "remote_subnet": "10.200.0.0/16",
+        "phase1_proposal": [
+          "aes256-sha256"
+        ],
+        "phase2_proposal": [
+          "aes256-sha256"
+        ]
+      }
+    ]
+  },
+  "security_profiles": {
+    "antivirus_profiles": [
+      {
+        "name": "av-profile-strict",
+        "scan_mode": "full",
+        "mobile_malware_db": true,
+        "archive_block": "encrypted",
+        "emulator": true
+      },
+      {
+        "name": "av-profile-standard",
+        "scan_mode": "full",
+        "emulator": true
+      }
+    ],
+    "ips_profiles": [
+      {
+        "name": "ips-strict",
+        "severity": [
+          "critical",
+          "high",
+          "medium"
+        ],
+        "action": "block",
+        "logging": true
+      },
+      {
+        "name": "ips-standard",
+        "severity": [
+          "critical",
+          "high"
+        ],
+        "action": "block",
+        "logging": true
+      }
+    ]
+  },
+  "logging_monitoring": {
+    "logging_enabled": true,
+    "log_destinations": [
+      "disk",
+      "syslog"
+    ],
+    "snmp_configuration": {
+      "status": "enabled",
+      "description": "GlobalTech-Primary-Firewall-Frankfurt",
+      "contact": "noc@globaltecheurope.eu",
+      "location": "Frankfurt Data Center 1",
+      "community_name": "globalt3ch_r0"
+    }
+  }
+}
