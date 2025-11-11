@@ -130,7 +130,8 @@ async def get_status(policy_service: Annotated[PolicyService, Depends(get_policy
         db_count = 0
         if policy_service.clickhouse_handler:
             try:
-                policy_service.clickhouse_handler.connect()
+                # Ensure database exists (handles connection internally)
+                policy_service.clickhouse_handler.ensure_database_exists()
                 db_count = policy_service.clickhouse_handler.get_policy_count()
             except Exception as e:
                 logger.warning(f"Failed to get database count: {e}")

@@ -176,7 +176,7 @@ class PolicyService:
             # Store in database
             if store_in_db and self.clickhouse_handler:
                 try:
-                    self.clickhouse_handler.connect()
+                    # Ensure database exists first (this handles connection internally)
                     self.clickhouse_handler.ensure_database_exists()
                     self.clickhouse_handler.create_table()
                     

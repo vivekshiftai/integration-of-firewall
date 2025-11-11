@@ -65,20 +65,26 @@ class ClickHouseHandler:
         self.client: Optional[Client] = None
         logger.info(f"Initialized ClickHouse handler for {config.host}:{config.port}")
     
-    def connect(self) -> None:
+    def connect(self, database: Optional[str] = None) -> None:
         """
         Establish connection to ClickHouse database.
+        
+        Args:
+            database: Optional database name. If None, uses self.config.database.
+                     If empty string, connects without specifying a database.
         
         Raises:
             DatabaseError: If connection fails
         """
         try:
-            logger.info(f"Connecting to ClickHouse at {self.config.host}:{self.config.port}")
+            db_name = database if database is not None else self.config.database
+            logger.info(f"Connecting to ClickHouse at {self.config.host}:{self.config.port}" + 
+                       (f" (database: {db_name})" if db_name else " (no database specified)"))
             
             self.client = Client(
                 host=self.config.host,
                 port=self.config.port,
-                database=self.config.database,
+                database=db_name if db_name else None,
                 user=self.config.username,
                 password=self.config.password,
                 secure=self.config.secure,
@@ -102,15 +108,67 @@ class ClickHouseHandler:
         """
         Ensure the database exists, create if it doesn't.
         
+        This method connects to the default database first, creates the target database
+        if it doesn't exist, then reconnects to the target database.
+        
         Raises:
             DatabaseError: If database creation fails
         """
         try:
             logger.info(f"Ensuring database '{self.config.database}' exists")
-            self.client.execute(f"CREATE DATABASE IF NOT EXISTS {self.config.database}")
-            logger.info(f"Database '{self.config.database}' is ready")
+            
+            # First, connect without specifying a database (or to 'default' database)
+            # to check if target database exists
+            temp_client = None
+            try:
+                # Try to connect to the target database first
+                temp_client = Client(
+                    host=self.config.host,
+                    port=self.config.port,
+                    database=self.config.database,
+                    user=self.config.username,
+                    password=self.config.password,
+                    secure=self.config.secure,
+                    verify=self.config.verify
+                )
+                temp_client.execute("SELECT 1")
+                # Database exists, we can use it
+                logger.info(f"Database '{self.config.database}' already exists")
+                if self.client:
+                    self.client.disconnect()
+                self.client = temp_client
+                return
+            except ClickHouseError:
+                # Database doesn't exist, need to create it
+                logger.info(f"Database '{self.config.database}' does not exist, creating it...")
+                if temp_client:
+                    temp_client.disconnect()
+            
+            # Connect to default database to create the target database
+            temp_client = Client(
+                host=self.config.host,
+                port=self.config.port,
+                database="default",
+                user=self.config.username,
+                password=self.config.password,
+                secure=self.config.secure,
+                verify=self.config.verify
+            )
+            
+            # Create the database
+            temp_client.execute(f"CREATE DATABASE IF NOT EXISTS {self.config.database}")
+            logger.info(f"Database '{self.config.database}' created successfully")
+            
+            # Disconnect and reconnect to the target database
+            temp_client.disconnect()
+            self.connect(database=self.config.database)
+            
         except ClickHouseError as e:
             error_msg = f"Failed to create database: {e}"
+            logger.error(error_msg)
+            raise DatabaseError(error_msg) from e
+        except Exception as e:
+            error_msg = f"Unexpected error ensuring database exists: {e}"
             logger.error(error_msg)
             raise DatabaseError(error_msg) from e
     
