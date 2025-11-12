@@ -284,7 +284,22 @@ class PolicyService:
             
             result["config"] = config
             result["success"] = True
-            logger.info(f"Successfully retrieved configuration with ID: {config_id}")
+            
+            # Log summary of retrieved configuration
+            if config and config.get("config_json"):
+                config_json = config["config_json"]
+                if isinstance(config_json, (dict, list)):
+                    logger.info(
+                        f"Successfully retrieved configuration with ID: {config_id} - "
+                        f"Vendor: {config.get('vendor_type', 'unknown')}, "
+                        f"Device: {config.get('device_id', 'unknown')}, "
+                        f"Type: {config.get('config_type', 'unknown')}"
+                    )
+                else:
+                    logger.info(f"Successfully retrieved configuration with ID: {config_id}")
+            else:
+                logger.info(f"Successfully retrieved configuration with ID: {config_id}")
+            
             return result
             
         except ValueError as e:

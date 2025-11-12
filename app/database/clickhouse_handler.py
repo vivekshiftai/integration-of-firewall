@@ -591,6 +591,32 @@ class ClickHouseHandler:
             try:
                 if config_dict.get("config_json"):
                     config_dict["config_json"] = json.loads(config_dict["config_json"])
+                    
+                    # Log information about the retrieved rules/policies
+                    config_data = config_dict["config_json"]
+                    if isinstance(config_data, dict):
+                        # Check for common policy/rule keys
+                        if "policies" in config_data:
+                            policies = config_data["policies"]
+                            if isinstance(policies, list):
+                                logger.info(f"Retrieved configuration with {len(policies)} policies/rules")
+                            else:
+                                logger.info("Retrieved configuration with policies/rules (non-list format)")
+                        elif "policy" in config_data:
+                            policy_data = config_data["policy"]
+                            if isinstance(policy_data, list):
+                                logger.info(f"Retrieved configuration with {len(policy_data)} policies/rules")
+                            else:
+                                logger.info("Retrieved configuration with policy/rule (single object)")
+                        else:
+                            # Check if it's a list of policies directly
+                            if isinstance(config_data, list):
+                                logger.info(f"Retrieved configuration with {len(config_data)} policies/rules")
+                            else:
+                                logger.info("Retrieved configuration data (structure may vary by vendor)")
+                    elif isinstance(config_data, list):
+                        logger.info(f"Retrieved configuration with {len(config_data)} policies/rules")
+                    
             except (json.JSONDecodeError, TypeError) as e:
                 logger.warning(f"Failed to parse config_json for ID {config_id}: {e}")
                 # Keep as string if parsing fails
