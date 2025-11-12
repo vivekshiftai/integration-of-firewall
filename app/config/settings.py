@@ -20,12 +20,29 @@ logger = logging.getLogger("fortigate_policy_retriever")
 
 # Load environment variables from .env file if available
 if DOTENV_AVAILABLE:
-    env_path = Path(".env")
-    if env_path.exists():
-        load_dotenv(env_path)
-        logger.info(f"Loaded environment variables from {env_path}")
+    # Try to find .env file in project root (where main.py is located)
+    # First try current directory, then try parent directories up to 3 levels
+    env_path = None
+    current_dir = Path(__file__).parent.parent.parent  # Go up from app/config/settings.py to project root
+    possible_paths = [
+        Path(".env"),  # Current working directory
+        current_dir / ".env",  # Project root
+        Path(__file__).parent.parent / ".env",  # app/.env
+    ]
+    
+    for path in possible_paths:
+        if path.exists() and path.is_file():
+            env_path = path
+            break
+    
+    if env_path:
+        load_dotenv(env_path, override=True)  # override=True ensures .env values take precedence
+        logger.info(f"✅ Loaded environment variables from {env_path.absolute()}")
     else:
-        logger.debug("No .env file found, using system environment variables")
+        logger.warning(
+            f"No .env file found. Searched in: {[str(p) for p in possible_paths]}. "
+            f"Using system environment variables only."
+        )
 else:
     logger.warning("python-dotenv not installed. Install it with: pip install python-dotenv")
 
@@ -126,13 +143,58 @@ class ClickHouseConfig:
         Returns:
             ClickHouseConfig: Configured instance
         """
-        host = os.getenv("CLICKHOUSE_HOST", "localhost")
-        port = int(os.getenv("CLICKHOUSE_PORT", "8123"))
-        database = os.getenv("CLICKHOUSE_DATABASE", "fortigate")
-        username = os.getenv("CLICKHOUSE_USER", None)
-        password = os.getenv("CLICKHOUSE_PASSWORD", None)
+        # Read environment variables with detailed logging
+        host = os.getenv("CLICKHOUSE_HOST")
+        if not host:
+            host = "localhost"
+            logger.warning("CLICKHOUSE_HOST not set in environment, using default 'localhost'")
+        else:
+            logger.debug(f"CLICKHOUSE_HOST from env: {host}")
+        
+        # Read port from environment
+        port_env = os.getenv("CLICKHOUSE_PORT")
+        if not port_env:
+            port = 8123
+            logger.warning("CLICKHOUSE_PORT not set in environment, using default 8123 (HTTP interface)")
+        else:
+            logger.debug(f"CLICKHOUSE_PORT from env: {port_env}")
+            try:
+                port = int(port_env)
+            except ValueError:
+                logger.error(f"Invalid CLICKHOUSE_PORT value '{port_env}', using default 8123")
+                port = 8123
+        
+        # Log port information
+        if port == 8123:
+            logger.info("Using ClickHouse HTTP interface (port 8123)")
+        elif port == 9000:
+            logger.info("Using ClickHouse native protocol (port 9000)")
+        else:
+            logger.info(f"Using ClickHouse port {port}")
+        
+        # Read database name
+        database = os.getenv("CLICKHOUSE_DATABASE")
+        if not database:
+            database = "firewall_configuration"
+            logger.warning("CLICKHOUSE_DATABASE not set in environment, using default 'firewall_configuration'")
+        else:
+            database = database.strip()
+            if database == "":
+                logger.warning("CLICKHOUSE_DATABASE is empty, using default 'firewall_configuration'")
+                database = "firewall_configuration"
+            else:
+                logger.debug(f"CLICKHOUSE_DATABASE from env: {database}")
+        
+        username = os.getenv("CLICKHOUSE_USER")
+        password = os.getenv("CLICKHOUSE_PASSWORD")
         secure = os.getenv("CLICKHOUSE_SECURE", "false").lower() == "true"
         verify = os.getenv("CLICKHOUSE_VERIFY", "false").lower() == "true"
+        
+        # Log final configuration (without password)
+        logger.info(
+            f"ClickHouse configuration - Host: {host}, Port: {port}, Database: {database}, "
+            f"User: {username or 'default'}"
+        )
         
         return cls(
             host=host,

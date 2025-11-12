@@ -13,6 +13,7 @@ class PolicySummaryResponse(BaseModel):
     policies_count: int
     db_stored: bool
     db_count: int
+    config_id: Optional[str] = Field(None, description="UUID of the stored configuration (if stored in database)")
     data_source: str = "api"  # "api" or "sample"
     summary: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
@@ -46,3 +47,10 @@ class FirewallConfigRequest(BaseModel):
     timeout: int = Field(default=30, description="Request timeout in seconds")
     api_version: str = Field(default="v2", description="API version")
 
+
+class ConfigResponse(BaseModel):
+    """Response model for configuration retrieval by ID."""
+    success: bool
+    config: Optional[Dict[str, Any]] = Field(None, description="Configuration data if found")
+    error: Optional[str] = Field(None, description="Error message if retrieval failed")
+    timestamp: datetime = Field(default_factory=datetime.now)

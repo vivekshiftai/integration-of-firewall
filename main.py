@@ -83,6 +83,7 @@ async def root():
         "endpoints": {
             "health": "/api/v1/health",
             "fetch_policies": "/api/v1/policies/fetch",
+            "get_config_by_id": "/api/v1/policies/{config_id}",
             "status": "/api/v1/policies/status",
             "docs": "/docs",
             "redoc": "/redoc"

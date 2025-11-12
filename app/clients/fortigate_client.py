@@ -64,6 +64,54 @@ class FortiGateClient:
         
         return session
     
+    def fetch_raw_config(self) -> Dict | List:
+        """
+        Fetch raw JSON configuration from FortiGate API.
+        Returns the entire JSON response as-is.
+        
+        Returns:
+            Dict or List: Raw JSON response from API
+            
+        Raises:
+            FortiGateAPIError: If API request fails, connection fails, or timeout occurs
+        """
+        try:
+            logger.info(f"Fetching raw JSON configuration from {self.config.ip_address}")
+            logger.debug(f"API endpoint: {self.config.api_endpoint}")
+            
+            response = self.session.get(
+                self.config.api_endpoint,
+                verify=self.config.verify_ssl,
+                timeout=self.config.timeout
+            )
+            
+            # Handle HTTP errors
+            self._validate_response(response)
+            
+            # Parse and return raw JSON response
+            data = self._parse_response(response)
+            
+            logger.info("Successfully retrieved raw JSON configuration from API")
+            return data
+            
+        except requests.exceptions.ConnectionError as e:
+            error_msg = (
+                f"Failed to connect to FortiGate at {self.config.ip_address}. "
+                f"Check network connectivity and IP address."
+            )
+            logger.error(f"{error_msg} Error: {e}")
+            raise FortiGateAPIError(error_msg) from e
+            
+        except requests.exceptions.Timeout as e:
+            error_msg = f"Connection timeout while connecting to FortiGate (timeout: {self.config.timeout}s)"
+            logger.error(f"{error_msg} Error: {e}")
+            raise FortiGateAPIError(error_msg) from e
+            
+        except requests.exceptions.RequestException as e:
+            error_msg = f"Request error occurred: {e}"
+            logger.error(error_msg)
+            raise FortiGateAPIError(error_msg) from e
+    
     def fetch_policies(self) -> List[Dict]:
         """
         Fetch all firewall policies from FortiGate.
@@ -151,7 +199,7 @@ class FortiGateClient:
             logger.error(error_msg)
             raise FortiGateAPIError(error_msg)
     
-    def _parse_response(self, response: requests.Response) -> Dict:
+    def _parse_response(self, response: requests.Response) -> Dict | List:
         """
         Parse JSON response from API.
         
@@ -159,7 +207,7 @@ class FortiGateClient:
             response: HTTP response object
             
         Returns:
-            Dict: Parsed JSON data
+            Dict or List: Parsed JSON data (can be dict or list)
             
         Raises:
             FortiGateAPIError: If JSON parsing fails

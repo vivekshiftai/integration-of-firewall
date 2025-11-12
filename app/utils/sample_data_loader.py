@@ -95,6 +95,45 @@ class SampleDataLoader:
             logger.error(f"{error_msg} File: {file_path}")
             raise
     
+    def load_full_json(self, filename: str = "fortinet-config.json") -> Dict | List:
+        """
+        Load entire JSON file as-is (dict or list).
+        
+        Args:
+            filename: Name of the JSON file
+            
+        Returns:
+            Dict or List: Entire JSON content (dict or list)
+            
+        Raises:
+            FileNotFoundError: If file doesn't exist
+            json.JSONDecodeError: If file contains invalid JSON
+        """
+        file_path = self.sample_data_dir / filename
+        
+        if not file_path.exists():
+            error_msg = f"JSON file not found: {file_path}"
+            logger.error(error_msg)
+            raise FileNotFoundError(error_msg)
+        
+        try:
+            logger.info(f"Loading entire JSON from {file_path}")
+            
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            logger.info(f"Successfully loaded entire JSON (type: {type(data).__name__})")
+            return data
+            
+        except json.JSONDecodeError as e:
+            error_msg = f"Failed to parse JSON: {e}"
+            logger.error(f"{error_msg} File: {file_path}")
+            raise json.JSONDecodeError(error_msg, e.doc, e.pos) from e
+        except Exception as e:
+            error_msg = f"Unexpected error loading JSON: {e}"
+            logger.error(f"{error_msg} File: {file_path}")
+            raise
+    
     def load_full_config(self, filename: str = "fortinet-config.json") -> Optional[Dict]:
         """
         Load full configuration from JSON file.

@@ -6,7 +6,7 @@ import logging
 from typing import Annotated, Optional
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, Body
 
-from app.models.schemas import PolicySummaryResponse, HealthResponse, FirewallConfigRequest
+from app.models.schemas import PolicySummaryResponse, HealthResponse, FirewallConfigRequest, ConfigResponse
 from app.services.policy_service import PolicyService
 from app.core.exceptions import FortiGateAPIError, DatabaseError
 from app.api.dependencies import get_policy_service
@@ -109,6 +109,78 @@ async def fetch_policies(
         )
     except Exception as e:
         logger.exception(f"Unexpected error in fetch_policies endpoint: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+
+@router.get("/policies/{config_id}", response_model=ConfigResponse)
+async def get_config_by_id(
+    config_id: str,
+    policy_service: Annotated[PolicyService, Depends(get_policy_service)]
+):
+    """
+    Retrieve a firewall configuration by its UUID ID.
+    
+    This endpoint fetches a specific configuration record from the database
+    using its unique identifier. The configuration includes all metadata,
+    vendor information, and the full JSON configuration data.
+    
+    Args:
+        config_id: UUID string identifying the configuration record
+        policy_service: Policy service instance (dependency injection)
+        
+    Returns:
+        ConfigResponse: Configuration data with success status
+        
+    Raises:
+        HTTPException: 
+            - 400: If config_id is not a valid UUID format
+            - 404: If configuration with the given ID is not found
+            - 503: If database operation fails
+            - 500: For unexpected errors
+    """
+    try:
+        logger.info(f"Retrieving configuration with ID: {config_id}")
+        
+        result = policy_service.get_config_by_id(config_id)
+        
+        if not result["success"]:
+            # Check if it's a validation error (400) or not found (404)
+            if "Invalid UUID" in result.get("error", ""):
+                logger.warning(f"Invalid UUID format: {config_id}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=result["error"]
+                )
+            else:
+                # Configuration not found
+                logger.warning(f"Configuration not found: {config_id}")
+                raise HTTPException(
+                    status_code=404,
+                    detail=result.get("error", f"Configuration with ID {config_id} not found")
+                )
+        
+        return ConfigResponse(**result)
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except ValueError as e:
+        logger.error(f"Invalid configuration ID format: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid UUID format: {str(e)}"
+        )
+    except DatabaseError as e:
+        logger.error(f"Database error retrieving configuration: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"Database error: {str(e)}"
+        )
+    except Exception as e:
+        logger.exception(f"Unexpected error retrieving configuration: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Internal server error: {str(e)}"
